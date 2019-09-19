@@ -1,0 +1,4 @@
+html2text==2019.8.11
+pycron==1.0.0
+PyYAML==5.1.2
+requests==2.22.0
