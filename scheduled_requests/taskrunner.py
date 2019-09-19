@@ -11,8 +11,13 @@ from html2text import html2text
 from .utils import merge, request_params
 
 class TaskRunner:
+    def _now_minutes(self):
+        return int(datetime.now().timestamp() / 60)
+
     def __init__(self, tasks, rate_limit=3):
-        self.last_run = datetime.now()
+        self.last_run_min = self._now_minutes()
+        self.curr_run_min = self._now_minutes()
+
         self.curr_run = datetime.now()
 
         self.rate_limit = rate_limit
@@ -30,7 +35,7 @@ class TaskRunner:
 
         # Check whether to make an actual request
         do_request = 'url' in params and 'method' in params
-        match_schedule = 'schedule' not in params or has_been(params['schedule'], self.last_run, self.curr_run)
+        match_schedule = 'schedule' not in params or is_now(params['schedule'], self.curr_run)
         skip = taskgroup.get('skip', False)
 
         # Print reasons why skip the request
@@ -62,17 +67,21 @@ class TaskRunner:
 
 
     def trigger(self):
-        self.curr_run = datetime.now()
-        print("Trigger at", self.curr_run)
-        self.run(self.tasks)
-        self.last_run = self.curr_run
+        self.curr_run_min = self._now_minutes()
+        if self.curr_run_min > self.last_run_min:
+            self.curr_run = datetime.now()
+            print("Trigger at", self.curr_run)
+            self.run(self.tasks)
+            self.last_run_min += 1
+        else:
+            print("Minute %s already done." % self.curr_run_min)
 
 
     # Keep running the tasks
     def poll(self):
         while not self.done:
             self.trigger()
-            sleep(60)
+            sleep(3)
 
 
 
