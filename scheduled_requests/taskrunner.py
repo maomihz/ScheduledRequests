@@ -4,7 +4,7 @@ from time import sleep
 from datetime import datetime
 
 from requests import request
-from pycron import has_been, is_now
+from pycron import is_now
 
 from html2text import html2text
 
@@ -12,78 +12,48 @@ from .utils import merge
 from .task import request_params_allowed as request_params
 
 class TaskRunner:
-    # Timestamp calculations
-    def _now_minutes(self):
-        return self._timestamp_minutes(datetime.now())
-
-    def _timestamp_minutes(self, datetime):
-        if hasattr(datetime, 'timestamp'):
-            return int(datetime.timestamp() / 60)
-        return int(datetime / 60)
-
-
 
     def __init__(self, tasks, rate_limit=3):
         self.last_run_min = self._now_minutes()
         self.curr_run_min = self._now_minutes()
 
-        self.curr_run = datetime.now()
-
         self.rate_limit = rate_limit
         self.tasks = tasks # Task root
         self.done = False
 
-    # Run a "task group"
-    def run(self, taskgroup, params=dict(), task_names=list()):
-        # Determine task names
-        names = task_names + [taskgroup.get('name', '')]
-        print("* Task: %s" % ' > '.join(names))
+    def run(self, timenow):
+        for task in self.tasks:
+            print("* Task: %s" % task.name)
+            schedule = task.task_params.get('schedule', '* * * * *')
 
-        # Merge new parameters, block keys that do not inheret
-        params = merge(taskgroup, params, blocked_keys={"name", "tasks", "skip"})
+            # Check schedule
+            if not is_now(schedule, timenow):
+                print("- Skipped due to schedule")
+                continue
 
-        # Check whether to make an actual request
-        do_request = 'url' in params and 'method' in params
-        match_schedule = 'schedule' not in params or is_now(params['schedule'], self.curr_run)
-        skip = taskgroup.get('skip', False)
-
-        # Print reasons why skip the request
-        if skip:
-            print("- Skipped due to explict skip")
-        elif not do_request:
-            print("- Skipped due to no request")
-        elif not match_schedule:
-            print("- Skipped due to schedule")
-        print("params", json.dumps(params, indent=2))
-
-        # Do the actual request, if condition satisfy
-        if do_request and match_schedule and not skip:
+            # Run the request
             print("*" * 50)
-            print("Tasks started: ", self.curr_run)
-            r = request(**merge(params, allowed_keys=request_params))
+            print("Tasks started: ", timenow)
+            r = request(**task.request_params)
             print(r.url)
             print(r.status_code)
-            # print('\n'.join(html2text(r.text).split('\n')[:50]))
+            print('\n'.join(html2text(r.text).split('\n')[:50]))
             print("+" * 50)
 
             # Rate limit sleep
             sleep(self.rate_limit)
 
-        # Run the subtasks
-        for task in taskgroup.get('tasks', []):
-            self.run(task, merge(params), names)
-
-
 
     def trigger(self):
         self.curr_run_min = self._now_minutes()
         if self.curr_run_min > self.last_run_min:
-            self.curr_run = datetime.now()
-            print("Trigger at", self.curr_run)
-            self.run(self.tasks)
+            timenow = datetime.now()
+            print("Trigger at", timenow)
+            self.run(timenow)
             self.last_run_min += 1
-        else:
-            print("Minute %s already done." % self.curr_run_min)
+            return True
+        print("Minute %s already done." % self.curr_run_min)
+        return False
 
 
     # Keep running the tasks
@@ -94,11 +64,13 @@ class TaskRunner:
 
 
 
-    # Construct runner from a yaml file
-    @classmethod
-    def load_yaml(cls, path):
-        import yaml
-        with open("tasks.yaml", "r") as f:
-            tasks = yaml.safe_load(f)
-        runner = TaskRunner(tasks)
-        return runner
+    # Timestamp calculations
+    def _now_minutes(self):
+        return self._timestamp_minutes(datetime.now())
+
+    def _timestamp_minutes(self, datetime):
+        if hasattr(datetime, 'timestamp'):
+            return int(datetime.timestamp() / 60)
+        return int(datetime / 60)
+
+
