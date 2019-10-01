@@ -39,6 +39,7 @@ class Task:
         name = task.get('name', '')
         skip = task.get('skip', False)
         tasks = task.get('tasks', [])
+        repeat = task.get('repeat', 1)
 
         # Merge additional parameters
         task_params = merge(task, task_params_parent, allowed_keys=task_params_allowed)
@@ -50,7 +51,7 @@ class Task:
         current_tasks = []
         # Add itself to the list
         if valid_request and not skip:
-            current_tasks.append(Task(name, task_params, request_params))
+            current_tasks.extend([Task(name, task_params, request_params)] * repeat)
 
         # Add all subtasks to the list
         for t in tasks:

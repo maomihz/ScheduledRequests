@@ -8,9 +8,6 @@ from pycron import is_now
 
 from html2text import html2text
 
-from .utils import merge
-from .task import request_params_allowed as request_params
-
 class TaskRunner:
 
     def __init__(self, tasks, rate_limit=3):
