@@ -1,13 +1,15 @@
 # https://stackoverflow.com/questions/20656135/python-deep-merge-dictionary-data
-def merge(source, destination=dict(), allowed_keys=set(), blocked_keys=set()):
+def merge(source, destination=None, allowed_keys=None, blocked_keys=None):
     result = dict()
-    keys = source.keys() | destination.keys()
+    keys = source.keys()
+    if destination:
+        keys |= destination.keys()
     if allowed_keys: # Whitelist mode
         keys &= allowed_keys
     if blocked_keys: # Blacklist mode
         keys -= blocked_keys
     for key in keys:
-        if key not in destination:
+        if not destination or key not in destination:
             result[key] = source[key]
         elif key not in source:
             result[key] = destination[key]
@@ -16,9 +18,3 @@ def merge(source, destination=dict(), allowed_keys=set(), blocked_keys=set()):
         else: # Fallback, take the source
             result[key] = source[key]
     return result
-
-request_params = {
-    "url", "method", "params", "data", "json", "headers", "cookies", "files",
-    "auth", "timeout",
-#     "allow_redirects", "proxies", "verify", "stream", "cert"
-}

@@ -8,11 +8,20 @@ from pycron import has_been, is_now
 
 from html2text import html2text
 
-from .utils import merge, request_params
+from .utils import merge
+from .task import request_params_allowed as request_params
 
 class TaskRunner:
+    # Timestamp calculations
     def _now_minutes(self):
-        return int(datetime.now().timestamp() / 60)
+        return self._timestamp_minutes(datetime.now())
+
+    def _timestamp_minutes(self, datetime):
+        if hasattr(datetime, 'timestamp'):
+            return int(datetime.timestamp() / 60)
+        return int(datetime / 60)
+
+
 
     def __init__(self, tasks, rate_limit=3):
         self.last_run_min = self._now_minutes()
