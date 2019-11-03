@@ -22,7 +22,7 @@ class TaskRunner:
         print("Running tasks at", timenow)
         for task in self.tasks:
             print("* Task: %s" % task.name)
-            schedule = task.task_params.get('schedule', '* * * * *')
+            schedule = task.task_params['schedule']
 
             # Check schedule
             if not is_now(schedule, timenow):

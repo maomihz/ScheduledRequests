@@ -4,8 +4,8 @@ request_params_allowed = {
     "auth", "timeout"
 }
 
-task_params_allowed = {
-    "schedule"
+task_params_default = {
+    "schedule": "* * * * *"
 }
 
 loader_params_default = {
@@ -38,7 +38,7 @@ class Task:
         import yaml
         with open(path, "r") as f:
             tasks = yaml.safe_load(f)
-        return cls.load_task(tasks)
+        return cls.load_task(tasks, task_params_parent=task_params_default)
 
     @classmethod
     def load_task(cls, task, task_params_parent=None, request_params_parent=None):
@@ -47,7 +47,7 @@ class Task:
         # Merge additional parameters
         name = task.get('name', '')
         loader_params = merge(task, loader_params_default, allowed_keys=loader_params_default.keys())
-        task_params = merge(task, task_params_parent, allowed_keys=task_params_allowed)
+        task_params = merge(task, task_params_parent, allowed_keys=task_params_default.keys())
         request_params = merge(task, request_params_parent, allowed_keys=request_params_allowed)
         tasks = []
 
