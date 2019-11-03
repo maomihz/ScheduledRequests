@@ -3,7 +3,16 @@ request_params_allowed = {
     "json", "headers", "cookies", "files",
     "auth", "timeout"
 }
-task_params_allowed = { "schedule" }
+
+task_params_allowed = {
+    "schedule"
+}
+
+loader_params_default = {
+    "skip": False,
+    "tasks": list(),
+    "repeat": 1
+}
 
 from .utils import merge
 
@@ -35,28 +44,24 @@ class Task:
     def load_task(cls, task, task_params_parent=None, request_params_parent=None):
         ''' Recursively compile task template (dict) to a list of task objects '''
 
-        # Get core parameters
-        name = task.get('name', '')
-        skip = task.get('skip', False)
-        tasks = task.get('tasks', [])
-        repeat = task.get('repeat', 1)
-
         # Merge additional parameters
+        name = task.get('name', '')
+        loader_params = merge(task, loader_params_default, allowed_keys=loader_params_default.keys())
         task_params = merge(task, task_params_parent, allowed_keys=task_params_allowed)
         request_params = merge(task, request_params_parent, allowed_keys=request_params_allowed)
+        tasks = []
 
         # Decide whether this is a valid task
         valid_request = 'url' in request_params and 'method' in request_params
 
-        current_tasks = []
         # Add itself to the list
-        if valid_request and not skip:
-            current_tasks.extend([Task(name, task_params, request_params)] * repeat)
+        if valid_request and not loader_params['skip']:
+            tasks.extend([Task(name, task_params, request_params)] * loader_params['repeat'])
 
         # Add all subtasks to the list
-        for t in tasks:
-            current_tasks.extend(cls.load_task(t, task_params, request_params))
-        return current_tasks
+        for t in loader_params['tasks']:
+            tasks.extend(cls.load_task(t, task_params, request_params))
+        return tasks
 
 
 
