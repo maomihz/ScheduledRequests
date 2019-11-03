@@ -18,7 +18,8 @@ class TaskRunner:
         self.tasks = tasks # Task root
         self.done = False
 
-    def run(self, timenow):
+    def run(self, timenow=datetime.now()):
+        print("Running tasks at", timenow)
         for task in self.tasks:
             print("* Task: %s" % task.name)
             schedule = task.task_params.get('schedule', '* * * * *')
@@ -44,9 +45,7 @@ class TaskRunner:
     def trigger(self):
         self.curr_run_min = self._now_minutes()
         if self.curr_run_min > self.last_run_min:
-            timenow = datetime.now()
-            print("Trigger at", timenow)
-            self.run(timenow)
+            self.run()
             self.last_run_min += 1
             return True
         print("Minute %s already done." % self.curr_run_min)
@@ -62,8 +61,8 @@ class TaskRunner:
 
 
     # Timestamp calculations
-    def _now_minutes(self):
-        return self._timestamp_minutes(datetime.now())
+    def _now_minutes(self, dt=datetime.now()):
+        return self._timestamp_minutes(dt)
 
     def _timestamp_minutes(self, datetime):
         if hasattr(datetime, 'timestamp'):
