@@ -1,6 +1,8 @@
+import argparse
+import logging
 from .taskrunner import TaskRunner
 from .task import Task
-import argparse
+from . import logger
 
 parser = argparse.ArgumentParser(description="Run python requests, scheduled.")
 parser.add_argument('-c', '--config', metavar="conf", nargs=1, default=['tasks.yaml'],
@@ -20,6 +22,12 @@ if args.debug:
         print("=" * 50)
         print(t)
     exit(0)
+
+# Set logging level
+if args.verbose >= 1:
+    logger.setLevel(logging.INFO)
+if args.verbose >= 2:
+    logger.setLevel(logging.DEBUG)
 
 
 # Run tasks
