@@ -5,6 +5,7 @@ from datetime import datetime
 
 from requests import request
 from pycron import is_now
+import pytz
 
 from html2text import html2text
 
@@ -21,15 +22,16 @@ class TaskRunner:
 
     def run(self, timenow=None):
         if timenow is None:
-            timenow = datetime.now()
+            timenow = datetime.now(pytz.utc)
 
         logger.info("Running tasks at %s", timenow)
         for task in self.tasks:
             logger.info("* Task: %s" % task.name)
             schedule = task.task_params['schedule']
+            timenow_local = timenow.astimezone(task.task_params['timezone'])
 
             # Check schedule
-            if not is_now(schedule, timenow):
+            if not is_now(schedule, timenow_local):
                 logger.info("- Skipped due to schedule")
                 continue
 
@@ -69,8 +71,8 @@ class TaskRunner:
     # Timestamp calculations
     def _now_minutes(self, dt=None):
         if dt is None:
-            dt = datetime.now()
-        return self._timestamp_minutes(datetime.now())
+            dt = datetime.now(pytz.utc)
+        return self._timestamp_minutes(dt)
 
     def _timestamp_minutes(self, time):
         if hasattr(time, 'timestamp'):

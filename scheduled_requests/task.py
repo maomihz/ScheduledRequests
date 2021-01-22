@@ -1,3 +1,6 @@
+import pytz
+from tzlocal import get_localzone
+
 request_params_allowed = {
     "url", "method", "params", "data",
     "json", "headers", "cookies", "files",
@@ -5,7 +8,8 @@ request_params_allowed = {
 }
 
 task_params_default = {
-    "schedule": "* * * * *"
+    "schedule": "* * * * *",
+    "timezone": get_localzone()
 }
 
 loader_params_default = {
@@ -21,6 +25,12 @@ class Task:
         self.name = name
         self.task_params = task_params
         self.request_params = request_params
+
+        # Convert timezone data to pytz format
+        task_timezone = self.task_params['timezone']
+        if task_timezone and isinstance(task_timezone, str):
+            task_tz = pytz.timezone(task_timezone)
+            self.task_params['timezone'] = task_tz
 
     def __repr__(self):
         return "<Task %s> %s %s" % (self.name, repr(self.task_params), repr(self.request_params))

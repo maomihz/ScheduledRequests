@@ -9,7 +9,7 @@ parser.add_argument('-c', '--config', metavar="conf", nargs=1, default=['tasks.y
     help="specify tasks configuration file")
 parser.add_argument('--cron', '--run', action='store_true', help="cron mode, run tasks and quit")
 parser.add_argument('--debug', action='store_true', help="parse config file and print")
-parser.add_argument('-v', '--verbose', action='count', help="Enable verbose logging")
+parser.add_argument('-v', '--verbose', action='count', default=0, help="Enable verbose logging")
 
 args = parser.parse_args()
 
