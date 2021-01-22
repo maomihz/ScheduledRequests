@@ -6,15 +6,18 @@ headers:
 
 tasks:
   - name: Do httpbin requests
-    method: GET
     schedule: "* * * * *"
-    url: http://httpbin.org/get
-    cookies:
-      auth: ecec
-    params:
-      page: 2
+    repeat: 2
 
     tasks:
+      - name: Do some GET
+        url: http://httpbin.org/get
+        method: GET
+        cookies:
+          auth: ecec
+        params:
+          page: 2
+
       - name: Do some POST
         url: http://httpbin.org/post
         method: POST

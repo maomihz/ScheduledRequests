@@ -68,5 +68,3 @@ class TaskRunner:
         if hasattr(datetime, 'timestamp'):
             return int(datetime.timestamp() / 60)
         return int(datetime / 60)
-
-

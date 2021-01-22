@@ -9,8 +9,7 @@ task_params_default = {
 }
 
 loader_params_default = {
-    "skip": False,
-    "tasks": list(),
+    "tasks": [],
     "repeat": 1
 }
 
@@ -38,7 +37,20 @@ class Task:
         import yaml
         with open(path, "r") as f:
             tasks = yaml.safe_load(f)
-        return cls.load_task(tasks, task_params_parent=task_params_default)
+        return cls.load_task_list(tasks, task_params_parent=task_params_default)
+
+    @classmethod
+    def load_task_list(cls, task_list, **kwargs):
+        """Load a list of tasks, if the argument is a list.
+        Otherwise, treat as a single task."""
+        tasks = []
+        if isinstance(task_list, list):
+            for task in task_list:
+                tasks.extend(cls.load_task(task, **kwargs))
+        else:
+            tasks.extend(cls.load_task(task_list, **kwargs))
+
+        return tasks
 
     @classmethod
     def load_task(cls, task, task_params_parent=None, request_params_parent=None):
@@ -51,18 +63,23 @@ class Task:
         request_params = merge(task, request_params_parent, allowed_keys=request_params_allowed)
         tasks = []
 
-        # Decide whether this is a valid task
-        valid_request = 'url' in request_params and 'method' in request_params
+        for i in range(loader_params['repeat']):
+            # The request must be valid and is a leaf
+            if cls.is_valid_request(request_params) and not loader_params['tasks']:
+                tasks.append(Task(name, task_params, request_params))
 
-        # Add itself to the list
-        if valid_request and not loader_params['skip']:
-            tasks.extend([Task(name, task_params, request_params)] * loader_params['repeat'])
+            # Add all subtasks to the list
+            tasks.extend(cls.load_task_list(
+                loader_params['tasks'],
+                task_params_parent=task_params,
+                request_params_parent=request_params))
 
-        # Add all subtasks to the list
-        for t in loader_params['tasks']:
-            tasks.extend(cls.load_task(t, task_params, request_params))
         return tasks
 
+    @classmethod
+    def is_valid_request(cls, request_params):
+        """Check if a request is valid.
 
-
-
+        A valid (complete) request requires at least url and method.
+        """
+        return 'url' in request_params and 'method' in request_params
