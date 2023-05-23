@@ -2,5 +2,5 @@ html2text==2020.1.16
 pycron==3.0.0
 pytz==2020.5
 PyYAML==5.4.1
-requests==2.25.1
+requests==2.31.0
 tzlocal==2.1
